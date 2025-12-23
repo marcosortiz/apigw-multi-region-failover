@@ -1,0 +1,53 @@
+Python Dependency Caching Fix - Files Changed
+==============================================
+
+Date: 2025-12-23
+Issue: GitHub Actions pip cache failure - no requirements.txt found
+
+PROBLEM:
+--------
+The GitHub Actions workflow used 'cache: pip' which requires a requirements.txt 
+or pyproject.toml file in the repository root. Only requirements-dev.txt existed, 
+causing the error:
+"No file in /home/runner/work/apigw-multi-region-failover/apigw-multi-region-failover 
+matched to [**/requirements.txt or **/pyproject.toml]"
+
+SOLUTION:
+---------
+1. Created requirements.txt in repository root with all testing dependencies
+2. Updated GitHub Actions workflow to use requirements.txt
+
+FILES CREATED:
+--------------
+✓ requirements.txt
+  - Contains Python testing dependencies (pytest, pytest-cov, pytest-mock, moto, boto3, aws-sam-cli)
+  - Enables GitHub Actions pip cache to work properly
+  - Required for unit test execution
+
+FILES MODIFIED:
+---------------
+✓ .github/workflows/lambda-tests.yml
+  - Line 12-13, 23-24: Added 'requirements.txt' to workflow trigger paths
+  - Line 48: Changed 'pip install -r requirements-dev.txt' to 'pip install -r requirements.txt'
+
+DEPENDENCIES ANALYSIS:
+---------------------
+Lambda Functions (service1, service2, external-api):
+  - Runtime: Only standard library (json, os)
+  - No external dependencies needed
+
+Unit Tests:
+  - pytest>=7.4.0 (test framework)
+  - pytest-cov>=4.1.0 (code coverage)
+  - pytest-mock>=3.12.0 (mocking support)
+  - moto>=4.2.0 (AWS service mocking)
+  - boto3>=1.28.0 (AWS SDK)
+  - aws-sam-cli>=1.100.0 (SAM CLI)
+
+VERIFICATION:
+-------------
+✓ requirements.txt exists and is valid
+✓ All Lambda functions have correct syntax
+✓ All unit tests pass (3 services tested)
+✓ GitHub Actions pip cache will now work correctly
+

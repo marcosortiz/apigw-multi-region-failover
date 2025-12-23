@@ -1,0 +1,6 @@
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+moto>=4.2.0
+boto3>=1.28.0
+aws-sam-cli>=1.100.0

@@ -61,19 +61,9 @@ Resources:
   RootLambdaRegionalApi:
     Type: AWS::Serverless::Function 
     Properties:
-      Handler: index.lambda_handler
-      InlineCode: |
-        import json
-        import os
-
-        def lambda_handler(event, context):
-            return {
-        "statusCode": 200,
-        "body": json.dumps({
-          "service" : "external-api",
-          "region" : os.environ['AWS_REGION']}),
-        }
-      Runtime: python3.9
+      CodeUri: src/
+      Handler: app.lambda_handler
+      Runtime: python3.13
       Events:
         HelloWorld:
           Type: Api 
