@@ -40,18 +40,8 @@ Resources:
   Service1LambdaRegionalApi:
     Type: AWS::Serverless::Function 
     Properties:
-      Handler: index.lambda_handler
-      InlineCode: |
-        import json
-        import os
-
-        def lambda_handler(event, context):
-            return {
-        "statusCode": 200,
-        "body": json.dumps({
-          "service" : "service1",
-          "region" : os.environ['AWS_REGION']}),
-        }
+      CodeUri: src/
+      Handler: app.lambda_handler
       Runtime: python3.13
       Events:
         HelloWorld:

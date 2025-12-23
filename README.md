@@ -43,7 +43,28 @@ If an issue with the primary region occurs, you can user Amazon Route53 ARC to r
 This example demonstrates the failover only and does not encompass authentication and data for the multiple regions.
 
 
-## Testing
+## Local Testing
+
+Before deploying to AWS, you can test Lambda functions locally to verify functionality. See the [Local Lambda Testing Guide](TESTING.md) for comprehensive instructions.
+
+**Quick Start:**
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run unit tests
+./run-unit-tests.sh
+
+# Test Lambda locally with SAM CLI
+./run-local-invoke.sh
+
+# Start local API Gateway
+./run-local-api.sh service1
+```
+
+For detailed testing instructions, testing best practices, and troubleshooting, refer to [TESTING.md](TESTING.md).
+
+## Integration Testing
 
 Deploy all 3 applications to both primary and secondary regions. Traffic will initially be routed to the primary region only. Use Amazon Route 53 ARC to independently failover the applications to the primary or secondary region. Amazon Route 53 will then route traffic the the new chosen region for each service.
 

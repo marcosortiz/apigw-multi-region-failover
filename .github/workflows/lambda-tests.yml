@@ -1,0 +1,159 @@
+name: Lambda Unit Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'service1/**'
+      - 'service2/**'
+      - 'external-api/**'
+      - 'run-*.sh'
+      - 'run-simple-tests.py'
+      - 'requirements-dev.txt'
+      - '.github/workflows/lambda-tests.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'service1/**'
+      - 'service2/**'
+      - 'external-api/**'
+      - 'run-*.sh'
+      - 'run-simple-tests.py'
+      - 'requirements-dev.txt'
+
+jobs:
+  test:
+    name: Run Lambda Unit Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.11', '3.13']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      
+      - name: Validate Python syntax
+        run: |
+          echo "Validating Lambda function syntax..."
+          python -m py_compile service1/src/app.py
+          python -m py_compile service2/src/app.py
+          python -m py_compile external-api/src/app.py
+          echo "✓ All Lambda functions are syntactically correct"
+      
+      - name: Run simple unit tests
+        run: |
+          echo "Running Python-based unit tests..."
+          python run-simple-tests.py
+      
+      - name: Run pytest unit tests
+        run: |
+          echo "Running pytest-based unit tests..."
+          chmod +x run-unit-tests.sh
+          ./run-unit-tests.sh -v -c
+      
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.13'
+        with:
+          files: ./service1/htmlcov/index.html,./service2/htmlcov/index.html,./external-api/htmlcov/index.html
+          flags: unittests
+          name: lambda-coverage
+          fail_ci_if_error: false
+      
+      - name: Archive test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-python-${{ matrix.python-version }}
+          path: |
+            **/htmlcov/
+            **/.pytest_cache/
+          retention-days: 7
+
+  sam-validate:
+    name: Validate SAM Templates
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      
+      - name: Install AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+      
+      - name: Validate SAM templates
+        run: |
+          echo "Validating service1 template..."
+          cd service1 && sam validate --lint
+          
+          echo "Validating service2 template..."
+          cd ../service2 && sam validate --lint
+          
+          echo "Validating external-api template..."
+          cd ../external-api && sam validate --lint
+          
+          echo "✓ All SAM templates are valid"
+
+  build:
+    name: Build Lambda Functions
+    runs-on: ubuntu-latest
+    needs: [test, sam-validate]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      
+      - name: Install AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+      
+      - name: Build service1
+        run: |
+          cd service1
+          sam build
+      
+      - name: Build service2
+        run: |
+          cd service2
+          sam build
+      
+      - name: Build external-api
+        run: |
+          cd external-api
+          sam build
+      
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-build-artifacts
+          path: |
+            service1/.aws-sam/build/
+            service2/.aws-sam/build/
+            external-api/.aws-sam/build/
+          retention-days: 7
