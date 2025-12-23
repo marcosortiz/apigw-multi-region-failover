@@ -92,8 +92,6 @@ Resources:
   Service1PrimaryHealthCheck:
     Type: AWS::Route53::HealthCheck
     Condition: isPrimaryRegion
-    DependsOn:
-      - Service1RoutingControlPrimary
     Properties:
       HealthCheckConfig:
         Type: RECOVERY_CONTROL
@@ -110,8 +108,6 @@ Resources:
   Service1SecondaryHealthCheck:
     Type: AWS::Route53::HealthCheck
     Condition: isSecondaryRegion
-    DependsOn:
-      - Service1RoutingControlSecondary
     Properties:
       HealthCheckConfig:
         Type: RECOVERY_CONTROL
@@ -119,8 +115,6 @@ Resources:
 
   Route53AliasRecordRegionalPrimary:
     Type: AWS::Route53::RecordSet
-    DependsOn:
-      - CustomDomainRegional
     Properties:
       Name: !Ref DomainName
       Type: A
